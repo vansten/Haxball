@@ -2,22 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-enum EPlayer
+public enum EPlayer
 {
     Player1 = 0,
     Player2
 }
 
 public class Player : MonoBehaviour {
-
-    [SerializeField]
-    private EPlayer _playerIndex;
-    private Rigidbody _myRigidBody;
-
-    void Start()
-    {
-        _myRigidBody = gameObject.GetComponent<Rigidbody>();
-    }
 
     //physics way 
     //private void FixedUpdate()
@@ -47,25 +38,23 @@ public class Player : MonoBehaviour {
     //    }
     //}
 
+    [SerializeField]
+    protected EPlayer _playerIndex;
 
+    protected PlayersInfo _myInfo;
+    protected GameObject _ball;
+    protected Rigidbody _myRigidBody;
+    protected const float _speed = 5.0f;
 
-    private GameObject _ball;
+    void Start()
+    {
+        _myRigidBody = gameObject.GetComponent<Rigidbody>();
+        _myInfo = GameController.Me.GetInfo(_playerIndex);
+    }
 
     private void Update()
     {
-        bool shoot;
-        Vector3 input;
-        if (_playerIndex == EPlayer.Player1)
-        {
-            input = new Vector3(Input.GetAxis("Horizontal"), 0.0f, Input.GetAxis("Vertical"));
-            shoot = Input.GetButtonDown("Jump");
-        }
-        else
-        {
-            input = new Vector3(Input.GetAxis("Horizontal2"), 0.0f, Input.GetAxis("Vertical2"));
-            shoot = Input.GetButtonDown("Jump2");
-        }
-
+        bool shoot = Input.GetButtonDown(_myInfo.ShootButtonName);
         if (shoot && _ball != null)
         {
             Vector3 direction = _ball.transform.position - gameObject.transform.position;
@@ -73,8 +62,11 @@ public class Player : MonoBehaviour {
             direction.Normalize();
             _ball.GetComponent<Rigidbody>().AddForce(direction * 2.0f, ForceMode.Impulse);
         }
+
+        Vector3 input = new Vector3(Input.GetAxis(_myInfo.HorizontalAxisName), 0.0f, Input.GetAxis(_myInfo.VerticalAxisName));
+
         input.Normalize();
-        input *= Time.deltaTime * 3.0f;
+        input *= Time.deltaTime * _speed;
         transform.localPosition += input;
         _myRigidBody.velocity = Vector3.zero;
     }

@@ -9,6 +9,6 @@ public class Goal : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        GameController.Me.IncreaseScore((int)_playerIndex);
+        GameController.Me.IncreaseScore(_playerIndex);
     }
 }
