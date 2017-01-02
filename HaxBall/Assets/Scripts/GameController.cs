@@ -39,12 +39,6 @@ public enum GameState
 
 public class GameController : Singleton<GameController>
 {
-    #region Consts
-
-    private const int _protocolPort = 3001;
-
-    #endregion
-
     #region Variables and Properties
 
     [SerializeField]
@@ -65,12 +59,7 @@ public class GameController : Singleton<GameController>
     private Dictionary<EPlayer, PlayersInfo> _playersDictionary;
 
     // Networking
-    private Socket _clientSocket;
-    private EndPoint _clientEndPoint;
-
-    private Socket _serverSocket;
-    private EndPoint _serverEndPoint;
-    private byte[] _receivedBytes;
+    protected NetworkController _networkController;
 
     private GameState _currentGameState;
     public GameState CurrentGameState
@@ -103,6 +92,11 @@ public class GameController : Singleton<GameController>
         protected set;
     }
 
+    public Transform Ball
+    {
+        get { return _ball; }
+    }
+
     #endregion
 
     #region Public methods
@@ -133,17 +127,16 @@ public class GameController : Singleton<GameController>
         Role = NetworkRole.Host;
         CurrentGameState = GameState.WaitingForPlayers;
 
-        _serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-        _serverEndPoint = new IPEndPoint(IPAddress.Any, _protocolPort);
-        _receivedBytes = new byte[1];
-        _serverSocket.Bind(_serverEndPoint);
-        _serverSocket.BeginReceiveFrom(_receivedBytes, 0, _receivedBytes.Length, SocketFlags.None, ref _serverEndPoint, new AsyncCallback(MessageReceivedCallback), (object)this);
+        _networkController = gameObject.AddComponent<Server>();
+        _networkController.Initialize(IPAddress.Any, STATICS.SERVER_PORT_LISTEN, STATICS.SERVER_PORT_SEND);
     }
+
     public void StartGameAsClient(IPAddress hostIP)
     {
         Role = NetworkRole.Client;
         CurrentGameState = GameState.WaitingForServer;
-        TryToConnect(hostIP);
+        _networkController = gameObject.AddComponent<Client>();
+        _networkController.Initialize(hostIP, STATICS.SERVER_PORT_SEND, STATICS.SERVER_PORT_LISTEN);
     }
 
     #endregion
@@ -185,48 +178,6 @@ public class GameController : Singleton<GameController>
         }
     }
     
-    private void TryToConnect(IPAddress hostIP)
-    {
-        if(Role == NetworkRole.Host)
-        {
-            //Trying to connect with host while being host isn't very wise
-            return;
-        }
-
-        _clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-        _clientEndPoint = new IPEndPoint(hostIP, _protocolPort);
-        byte[] buffer = new byte[1];
-        buffer[0] = 1;
-        _clientSocket.SendTo(buffer, 1, SocketFlags.None, _clientEndPoint);
-    }
-
-    private void MessageReceivedCallback(IAsyncResult result)
-    {
-        EndPoint remoteEndPoint = new IPEndPoint(0, 0);
-        try
-        {
-            int bytesRead = _serverSocket.EndReceiveFrom(result, ref remoteEndPoint);
-            foreach(byte b in _receivedBytes)
-            {
-                Debug.Log(b);
-            }
-        }
-        catch (SocketException e)
-        {
-            Console.WriteLine("Error: {0} {1}", e.ErrorCode, e.Message);
-        }
-
-        _serverSocket.BeginReceiveFrom(_receivedBytes, 0, _receivedBytes.Length,
-            SocketFlags.None, ref _serverEndPoint,
-            new AsyncCallback(MessageReceivedCallback), (object)this);
-    }
-
-
-    private void ReceiveDataFromClients()
-    {
-
-    }
-
     private void SendDataToHost()
     {
 
@@ -234,7 +185,8 @@ public class GameController : Singleton<GameController>
 
     private void SendDataToClients()
     {
-
+        byte[] bytesToSend = ServerPacket.ToRawData(_players, _ball);
+        _networkController.SendData(bytesToSend, bytesToSend.Length);
     }
 
     #endregion
@@ -264,11 +216,7 @@ public class GameController : Singleton<GameController>
     {
         if(CurrentGameState == GameState.Game)
         {
-            if(Role == NetworkRole.Host)
-            {
-                ReceiveDataFromClients();
-            }
-            else
+            if(Role == NetworkRole.Client)
             {
                 SendDataToHost();
             }
