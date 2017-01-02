@@ -8,8 +8,8 @@ public enum EPlayer
     Player2
 }
 
-public class Player : MonoBehaviour {
-
+public class Player : MonoBehaviour
+{
     //physics way 
     //private void FixedUpdate()
     //{
