@@ -60,6 +60,8 @@ public class GameController : Singleton<GameController>
 
     // Networking
     protected NetworkController _networkController;
+    protected bool _shouldSetActive;
+    protected bool _shouldResetGame;
 
     private GameState _currentGameState;
     public GameState CurrentGameState
@@ -70,16 +72,18 @@ public class GameController : Singleton<GameController>
             if(_currentGameState != value)
             {
                 _currentGameState = value;
-                SetGameObjects();
+                _shouldSetActive = true;
 
-                switch (_currentGameState)
+                switch(_currentGameState)
                 {
                     case GameState.Game:
-                        ResetGameState();
+                        _shouldResetGame = true;
                         break;
                     case GameState.HostJoinMenu:
                         break;
                     case GameState.WaitingForPlayers:
+                        break;
+                    case GameState.WaitingForServer:
                         break;
                 }
             }
@@ -157,6 +161,7 @@ public class GameController : Singleton<GameController>
 
     private void ResetGameState()
     {
+        _shouldResetGame = false;
         ResetBall();
         ResetPlayers();
 
@@ -181,6 +186,7 @@ public class GameController : Singleton<GameController>
 
     private void SetGameObjects()
     {
+        _shouldSetActive = false;
         _waitingForPlayersMenuGO.SetActive(CurrentGameState == GameState.WaitingForPlayers);
         _waitingForServerMenuGO.SetActive(CurrentGameState == GameState.WaitingForServer);
         _hostJoinMenuGO.SetActive(CurrentGameState == GameState.HostJoinMenu);
@@ -211,6 +217,19 @@ public class GameController : Singleton<GameController>
     {
         CurrentGameState = GameState.Game;
         CurrentGameState = GameState.HostJoinMenu;
+    }
+
+    protected void Update()
+    {
+        if(_shouldSetActive)
+        {
+            SetGameObjects();
+        }
+
+        if(_shouldResetGame)
+        {
+            ResetGameState();
+        }
     }
 
     #endregion
