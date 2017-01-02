@@ -11,8 +11,9 @@ public struct STATICS
     public const int SERVER_PORT_LISTEN = 3001;
     public const int SERVER_PORT_SEND = 3002;
 
-    public const int SYMBOL_DATA = 0x10;
+    public const int SYMBOL_PLAYER_CONNECTED = 0x08;
     public const int SYMBOL_INFO = 0x09;
+    public const int SYMBOL_DATA = 0x10;
 }
 
 //Packet from server to clients
@@ -168,12 +169,13 @@ public abstract class NetworkController : MonoBehaviour
         _sendSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         _receiveEndPoint = new IPEndPoint(IPAddress.Any, receivePort);
         _receiveSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-
+        _receiveSocket.Bind(_receiveEndPoint);
         _receiveSocket.BeginReceiveFrom(_receivedBytes, 0, STATICS.MAX_MESSAGE_LENGTH, SocketFlags.None, ref _receiveEndPoint, MessageReceivedCallback, this);
     }
 
-    public void SendData(byte[] bytes, int length)
+    public void SendData(byte[] bytes, int length, IPAddress ip)
     {
+        ((IPEndPoint)_sendEndPoint).Address = ip;
         _sendSocket.SendTo(bytes, length, SocketFlags.None, _sendEndPoint);
     }
 

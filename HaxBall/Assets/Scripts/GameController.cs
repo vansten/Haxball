@@ -92,6 +92,11 @@ public class GameController : Singleton<GameController>
         protected set;
     }
 
+    public PlayersInfo[] Players
+    {
+        get { return _players; }
+    }
+
     public Transform Ball
     {
         get { return _ball; }
@@ -137,6 +142,13 @@ public class GameController : Singleton<GameController>
         CurrentGameState = GameState.WaitingForServer;
         _networkController = gameObject.AddComponent<Client>();
         _networkController.Initialize(hostIP, STATICS.SERVER_PORT_SEND, STATICS.SERVER_PORT_LISTEN);
+        Client c = (Client)_networkController;
+        c.Connect(hostIP);
+    }
+
+    public void StartGame()
+    {
+        CurrentGameState = GameState.Game;
     }
 
     #endregion
@@ -177,17 +189,6 @@ public class GameController : Singleton<GameController>
             go.SetActive(CurrentGameState == GameState.Game);
         }
     }
-    
-    private void SendDataToHost()
-    {
-
-    }
-
-    private void SendDataToClients()
-    {
-        byte[] bytesToSend = ServerPacket.ToRawData(_players, _ball);
-        _networkController.SendData(bytesToSend, bytesToSend.Length);
-    }
 
     #endregion
 
@@ -210,28 +211,6 @@ public class GameController : Singleton<GameController>
     {
         CurrentGameState = GameState.Game;
         CurrentGameState = GameState.HostJoinMenu;
-    }
-
-    protected void Update()
-    {
-        if(CurrentGameState == GameState.Game)
-        {
-            if(Role == NetworkRole.Client)
-            {
-                SendDataToHost();
-            }
-        }
-    }
-
-    protected void LateUpdate()
-    {
-        if (CurrentGameState == GameState.Game)
-        {
-            if (Role == NetworkRole.Host)
-            {
-                SendDataToClients();
-            }
-        }
     }
 
     #endregion
