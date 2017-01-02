@@ -184,7 +184,7 @@ public abstract class NetworkController : MonoBehaviour
         try
         {
             int bytesRead = _receiveSocket.EndReceiveFrom(result, ref _receiveEndPoint);
-            if(CheckData(_receivedBytes, bytesRead))
+            if (CheckData(_receivedBytes, bytesRead))
             {
                 OnDataRead(_receivedBytes, bytesRead);
             }
@@ -208,7 +208,7 @@ public abstract class NetworkController : MonoBehaviour
 
     protected bool CheckData(byte[] bytes, int length)
     {
-        if (!(length > 0 && length < STATICS.MAX_MESSAGE_LENGTH))
+        if (!(length > 0 && length <= STATICS.MAX_MESSAGE_LENGTH))
         {
             return false;
         }
