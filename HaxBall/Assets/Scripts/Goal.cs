@@ -9,6 +9,9 @@ public class Goal : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        GameController.Me.IncreaseScore(_playerIndex);
+        if(GameController.Me.Role == NetworkRole.Host)
+        {
+            GameController.Me.IncreaseScore(_playerIndex);
+        }
     }
 }

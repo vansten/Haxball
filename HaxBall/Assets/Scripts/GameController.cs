@@ -205,6 +205,8 @@ public class GameController : Singleton<GameController>
             _playersDictionary[ppd.Index].Score = ppd.Score;
         }
         _shouldUpdatePositionsFromServerPacket = true;
+
+        Score.text = string.Format("{0} : {1}", _playersDictionary[EPlayer.Player1].Score, _playersDictionary[EPlayer.Player2].Score);
     }
 
     public void SetFromClientPacket(ClientPacket packet)
