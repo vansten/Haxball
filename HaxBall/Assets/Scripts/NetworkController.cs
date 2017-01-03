@@ -11,9 +11,11 @@ public struct STATICS
     public const int SERVER_PORT_LISTEN = 3001;
     public const int SERVER_PORT_SEND = 3002;
 
+    public const int SYMBOL_PLAYER_DISCONNECTED = 0x07;
     public const int SYMBOL_PLAYER_CONNECTED = 0x08;
     public const int SYMBOL_INFO = 0x09;
     public const int SYMBOL_DATA = 0x10;
+    public const int SYMBOL_FORCE_DISCONNECT = 0x11;
 }
 
 //Packet from server to clients

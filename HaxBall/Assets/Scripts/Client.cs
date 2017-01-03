@@ -10,10 +10,22 @@ public class Client : NetworkController
     [HideInInspector]
     public IPAddress HostIP;
 
+    protected void OnApplicationQuit()
+    {
+        Disconnect();
+    }
+
     protected override void OnDataRead(byte[] bytes, int length)
     {
         if(length > 0)
         {
+            Debug.Log("Client received data!");
+            if (bytes[0] == STATICS.SYMBOL_FORCE_DISCONNECT)
+            {
+                Debug.Log("Server lost!");
+                GameController.Me.BackToHostJoinMenu();
+                return;
+            }
             ServerPacket sp = ServerPacket.FromRawData(bytes);
             if(sp != null)
             {
@@ -24,6 +36,7 @@ public class Client : NetworkController
     
     public void Connect(IPAddress hostIP)
     {
+        Debug.Log("Trying to connect");
         HostIP = hostIP;
         byte[] ipPacket = new byte[1 + sizeof(int)];
         ipPacket[0] = STATICS.SYMBOL_PLAYER_CONNECTED;
@@ -32,6 +45,28 @@ public class Client : NetworkController
         {
             return;
         }
+        Debug.Log("Connecting");
+        Array.Copy(myIP.GetAddressBytes(), 0, ipPacket, 1, sizeof(int));
+
+        SendData(ipPacket, ipPacket.Length, HostIP);
+    }
+
+    public void Disconnect()
+    {
+        Debug.Log("Trying to disconnect");
+        if(HostIP == null)
+        {
+            return;
+        }
+        Debug.Log("Trying to disconnect 2");
+        byte[] ipPacket = new byte[1 + sizeof(int)];
+        ipPacket[0] = STATICS.SYMBOL_PLAYER_DISCONNECTED;
+        IPAddress myIP = GetClientIP();
+        if (myIP == null)
+        {
+            return;
+        }
+        Debug.Log("Disconnecting");
         Array.Copy(myIP.GetAddressBytes(), 0, ipPacket, 1, sizeof(int));
 
         SendData(ipPacket, ipPacket.Length, HostIP);

@@ -18,6 +18,8 @@ public class PlayersInfo
     public string VerticalAxisName;
     public string ShootButtonName;
     [HideInInspector]
+    public Vector3 InitPosition;
+    [HideInInspector]
     public int Score;
 }
 
@@ -62,6 +64,9 @@ public class GameController : Singleton<GameController>
     protected NetworkController _networkController;
     protected bool _shouldSetActive;
     protected bool _shouldResetGame;
+
+    // Initial game state
+    protected Vector3 _ballInitPosition;
 
     private GameState _currentGameState;
     public GameState CurrentGameState
@@ -155,6 +160,13 @@ public class GameController : Singleton<GameController>
         CurrentGameState = GameState.Game;
     }
 
+    public void BackToHostJoinMenu()
+    {
+        CurrentGameState = GameState.HostJoinMenu;
+        Destroy(_networkController);
+        _networkController = null;
+    }
+
     #endregion
 
     #region Private and protected methods
@@ -170,18 +182,18 @@ public class GameController : Singleton<GameController>
 
     private void ResetBall()
     {
-        _ball.transform.localPosition = new Vector3(2.0f, 1.0f, 9.0f);
+        _ball.transform.position = _ballInitPosition;
         _ball.gameObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
         _ball.gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
     }
 
     private void ResetPlayers()
     {
-        _players[0].PlayerTransform.localPosition = new Vector3(-8.0f, 1.5f, 9.0f);
-        _players[0].PlayerGO.GetComponent<Rigidbody>().velocity = Vector3.zero;
-
-        _players[1].PlayerTransform.localPosition = new Vector3(12.0f, 1.5f, 9.0f);
-        _players[1].PlayerGO.GetComponent<Rigidbody>().velocity = Vector3.zero;
+        foreach(EPlayer player in _playersDictionary.Keys)
+        {
+            _playersDictionary[player].PlayerTransform.position = _playersDictionary[player].InitPosition;
+            _playersDictionary[player].PlayerGO.GetComponent<Rigidbody>().velocity = Vector3.zero;
+        }
     }
 
     private void SetGameObjects()
@@ -215,6 +227,12 @@ public class GameController : Singleton<GameController>
 
     protected void Start()
     {
+        _ballInitPosition = _ball.position;
+        foreach (EPlayer player in _playersDictionary.Keys)
+        {
+            _playersDictionary[player].InitPosition = _playersDictionary[player].PlayerTransform.position;
+        }
+
         CurrentGameState = GameState.Game;
         CurrentGameState = GameState.HostJoinMenu;
     }
