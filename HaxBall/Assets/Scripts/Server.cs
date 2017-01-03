@@ -56,6 +56,12 @@ public class Server : NetworkController
 
     protected void ForceDisconnection()
     {
+        if(_client == null)
+        {
+            // Client already disconnected
+            return;
+        }
+
         Debug.Log("Client lost!");
         byte[] forceDisconnectData = new byte[1];
         forceDisconnectData[0] = STATICS.SYMBOL_FORCE_DISCONNECT;
@@ -74,11 +80,11 @@ public class Server : NetworkController
     {
         if(_client != null && Time.realtimeSinceStartup - _lastTime > 30.0f)
         {
-        ForceDisconnection();
+            ForceDisconnection();
         }
 
         byte[] sendData = ServerPacket.ToRawData(GameController.Me.Players, GameController.Me.Ball);
-        if(_client != null && Time.realtimeSinceStartup - _lastSendTime > 0.1f)
+        if(_client != null)
         {
             _lastSendTime = Time.realtimeSinceStartup;
             Debug.Log("Send data!");

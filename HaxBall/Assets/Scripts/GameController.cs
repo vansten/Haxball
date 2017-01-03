@@ -202,6 +202,7 @@ public class GameController : Singleton<GameController>
         foreach(ServerPacket.PlayerPacketData ppd in packet.PlayersInfo)
         {
             _playersPositionsFromPacket[(int)ppd.Index] = ppd.Position;
+            _playersDictionary[ppd.Index].Score = ppd.Score;
         }
         _shouldUpdatePositionsFromServerPacket = true;
     }

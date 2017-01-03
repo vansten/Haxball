@@ -23,12 +23,14 @@ public struct STATICS
 public class ServerPacket
 {
     public const int DATA_OFFSET = 1 + 3 * sizeof(int);
-    public const int ONE_PLAYER_OFFSET = sizeof(int) + 3 * sizeof(float);
+                                        //Index         Position            Score
+    public const int ONE_PLAYER_OFFSET = sizeof(int) + 3 * sizeof(float) + sizeof(int);
 
     public struct PlayerPacketData
     {
         public EPlayer Index;
         public Vector3 Position;
+        public int Score;
     }
     public PlayerPacketData[] PlayersInfo;
     public Vector3 BallPosition;
@@ -46,10 +48,12 @@ public class ServerPacket
             byte[] posX = BitConverter.GetBytes(pd.PlayerTransform.position.x);
             byte[] posY = BitConverter.GetBytes(pd.PlayerTransform.position.y);
             byte[] posZ = BitConverter.GetBytes(pd.PlayerTransform.position.z);
+            byte[] score = BitConverter.GetBytes(pd.Score);
             Array.Copy(index, 0, toRet, DATA_OFFSET + offset + 1, sizeof(int));
             Array.Copy(posX, 0, toRet, DATA_OFFSET + offset + 1 + sizeof(int), sizeof(float));
             Array.Copy(posY, 0, toRet, DATA_OFFSET + offset + 1 + sizeof(int) + sizeof(float), sizeof(float));
             Array.Copy(posZ, 0, toRet, DATA_OFFSET + offset + 1 + sizeof(int) + 2 * sizeof(float), sizeof(float));
+            Array.Copy(score, 0, toRet, DATA_OFFSET + offset + 1 + sizeof(int) + 3 * sizeof(float), sizeof(int));
         }
         int pdOffset = playersData.Length * ONE_PLAYER_OFFSET + 1;
         byte[] ballPosX = BitConverter.GetBytes(ball.position.x);
@@ -100,6 +104,7 @@ public class ServerPacket
             p.PlayersInfo[i].Position.x = BitConverter.ToSingle(rawData, DATA_OFFSET + i * ONE_PLAYER_OFFSET + 1 + sizeof(int));
             p.PlayersInfo[i].Position.y = BitConverter.ToSingle(rawData, DATA_OFFSET + i * ONE_PLAYER_OFFSET + 1 + sizeof(int) + sizeof(float));
             p.PlayersInfo[i].Position.z = BitConverter.ToSingle(rawData, DATA_OFFSET + i * ONE_PLAYER_OFFSET + 1 + sizeof(int) + 2*sizeof(float));
+            p.PlayersInfo[i].Score = BitConverter.ToInt32(rawData, DATA_OFFSET + i * ONE_PLAYER_OFFSET + 1 + sizeof(int) + 3 * sizeof(float));
         }
         int ballDataOffset = playersRead * ONE_PLAYER_OFFSET + DATA_OFFSET + 1;
         p.BallPosition.x = BitConverter.ToSingle(rawData, ballDataOffset);
