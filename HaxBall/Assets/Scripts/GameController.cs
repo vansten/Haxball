@@ -62,9 +62,17 @@ public class GameController : Singleton<GameController>
 
     // Networking
     protected NetworkController _networkController;
+    protected Player _clientPlayer;
+    protected Vector3[] _playersPositionsFromPacket;
+    protected Vector3 _ballPositionFromPacket;
+    protected Vector2 _movementFromPacket;
+    protected bool _shootFromPacket;
+
     protected bool _shouldSetActive;
     protected bool _shouldResetGame;
     protected bool _shouldReturnToMenu;
+    protected bool _shouldUpdateClientPlayerFromPacket;
+    protected bool _shouldUpdatePositionsFromServerPacket;
 
     // Initial game state
     protected Vector3 _ballInitPosition;
@@ -146,8 +154,8 @@ public class GameController : Singleton<GameController>
         _networkController.Initialize(IPAddress.Any, STATICS.SERVER_PORT_LISTEN, STATICS.SERVER_PORT_SEND);
         Player hostPlayer = _playersDictionary[EPlayer.Player1].PlayerGO.AddComponent<LocalPlayer>();
         hostPlayer.PlayerIndex = EPlayer.Player1;
-        Player clientPlayer = _playersDictionary[EPlayer.Player2].PlayerGO.AddComponent<Player>();
-        clientPlayer.PlayerIndex = EPlayer.Player2;
+        _clientPlayer = _playersDictionary[EPlayer.Player2].PlayerGO.AddComponent<Player>();
+        _clientPlayer.PlayerIndex = EPlayer.Player2;
     }
 
     public void StartGameAsClient(IPAddress hostIP)
@@ -178,27 +186,26 @@ public class GameController : Singleton<GameController>
             return;
         }
 
-        _ball.position = packet.BallPosition;
+        _ballPositionFromPacket = packet.BallPosition;
         foreach(ServerPacket.PlayerPacketData ppd in packet.PlayersInfo)
         {
-            _playersDictionary[ppd.Index].PlayerTransform.position = ppd.Position;
+            _playersPositionsFromPacket[(int)ppd.Index] = ppd.Position;
         }
+        _shouldUpdatePositionsFromServerPacket = true;
     }
 
     public void SetFromClientPacket(ClientPacket packet)
     {
-        Player clientPlayer = _playersDictionary[packet.PlayerIndex].PlayerGO.GetComponent<Player>();
-        if(clientPlayer == null)
+        if(_clientPlayer == null)
         {
             Debug.Log("Cannot get player component");
             return;
         }
 
-        if(packet.ShootInput)
-        {
-            clientPlayer.TryShoot();
-        }
-        clientPlayer.AddMovement(packet.MovementInput);
+
+        _shootFromPacket = packet.ShootInput;
+        _movementFromPacket = packet.MovementInput;
+        _shouldUpdateClientPlayerFromPacket = true;
     }
 
     #endregion
@@ -250,6 +257,30 @@ public class GameController : Singleton<GameController>
         _networkController = null;
     }
 
+    protected void UpdatePositionsFromServerPacket()
+    {
+        _shouldUpdatePositionsFromServerPacket = false;
+        _ball.position = _ballPositionFromPacket;
+        foreach(EPlayer player in _playersDictionary.Keys)
+        {
+            _playersDictionary[player].PlayerTransform.position = _playersPositionsFromPacket[(int)player];
+        }
+    }
+
+    protected void UpdateInputFromClientPacket()
+    {
+        _shouldUpdateClientPlayerFromPacket = false;
+        if(_clientPlayer != null)
+        {
+            if(_shootFromPacket)
+            {
+                _clientPlayer.TryShoot();
+            }
+
+            _clientPlayer.AddMovement(_movementFromPacket);
+        }
+    }
+
     #endregion
 
     #region Unity methods
@@ -265,6 +296,8 @@ public class GameController : Singleton<GameController>
             _playersDictionary.Add(pi.PlayerIndex, pi);
             _playersDictionary[pi.PlayerIndex].Score = 0;
         }
+
+        _playersPositionsFromPacket = new Vector3[_playersDictionary.Keys.Count];
 	}
 
     protected void Start()
@@ -294,6 +327,16 @@ public class GameController : Singleton<GameController>
         if(_shouldReturnToMenu)
         {
             ReturnToHostJoinMenu();
+        }
+
+        if(_shouldUpdateClientPlayerFromPacket)
+        {
+            UpdateInputFromClientPacket();
+        }
+
+        if(_shouldUpdatePositionsFromServerPacket)
+        {
+            UpdatePositionsFromServerPacket();
         }
     }
 
