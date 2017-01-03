@@ -130,6 +130,7 @@ public class Client : NetworkController
         {
             if (GameController.Me.Seconds - _lastTime > 30.0f)
             {
+                Debug.Log("Client side timeout: " + GameController.Me.Seconds.ToString() + " vs. " + _lastTime.ToString());
                 Disconnect();
                 GameController.Me.BackToHostJoinMenu();
             }
