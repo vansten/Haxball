@@ -57,7 +57,7 @@ public class Server : NetworkController
         }
     }
 
-    protected void ForceDisconnection()
+    protected void ForceDisconnection(bool sendForceDisconnectPacket)
     {
         if(_client == null)
         {
@@ -66,9 +66,12 @@ public class Server : NetworkController
         }
 
         Debug.Log("Client lost!");
-        byte[] forceDisconnectData = new byte[1];
-        forceDisconnectData[0] = STATICS.SYMBOL_FORCE_DISCONNECT;
-        SendData(forceDisconnectData, 1, _client);
+        if(sendForceDisconnectPacket)
+        {
+            byte[] forceDisconnectData = new byte[1];
+            forceDisconnectData[0] = STATICS.SYMBOL_FORCE_DISCONNECT;
+            SendData(forceDisconnectData, 1, _client);
+        }
         _client = null;
 
         GameController.Me.ClientLost();
@@ -76,7 +79,7 @@ public class Server : NetworkController
 
     protected override void OnApplicationQuit()
     {
-        ForceDisconnection();
+        ForceDisconnection(true);
         base.OnApplicationQuit();
     }
 
@@ -87,14 +90,14 @@ public class Server : NetworkController
             if (_client != null && (GameController.Me.Seconds - _lastTime) > 30.0f)
             {
                 Debug.Log("Server side timeout: " + GameController.Me.Seconds.ToString() + " vs. " + _lastTime.ToString());
-                ForceDisconnection();
+                ForceDisconnection(true);
             }
 
             if(_client != null && _shouldDisconnectClient)
             {
                 Debug.Log("Should disconnect");
                 _shouldDisconnectClient = false;
-                ForceDisconnection();
+                ForceDisconnection(false);
             }
 
             byte[] sendData = ServerPacket.ToRawData(GameController.Me.Players, GameController.Me.Ball);
