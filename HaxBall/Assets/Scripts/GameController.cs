@@ -168,6 +168,18 @@ public class GameController : Singleton<GameController>
         c.Connect(hostIP, _playersDictionary[EPlayer.Player2]);
     }
 
+    public void ClientLost()
+    {
+        if(Role == NetworkRole.Client)
+        {
+            // Client can't loose client :V
+            return;
+        }
+
+        ResetGameState();
+        CurrentGameState = GameState.WaitingForPlayers;
+    }
+
     public void StartGame()
     {
         CurrentGameState = GameState.Game;

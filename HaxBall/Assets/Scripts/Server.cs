@@ -61,6 +61,8 @@ public class Server : NetworkController
         forceDisconnectData[0] = STATICS.SYMBOL_FORCE_DISCONNECT;
         SendData(forceDisconnectData, 1, _client);
         _client = null;
+
+        GameController.Me.ClientLost();
     }
 
     protected void OnApplicationQuit()
@@ -76,7 +78,7 @@ public class Server : NetworkController
         }
 
         byte[] sendData = ServerPacket.ToRawData(GameController.Me.Players, GameController.Me.Ball);
-        if(_client != null && Time.realtimeSinceStartup - _lastSendTime > 0.05f)
+        if(_client != null && Time.realtimeSinceStartup - _lastSendTime > 0.1f)
         {
             _lastSendTime = Time.realtimeSinceStartup;
             Debug.Log("Send data!");
