@@ -82,18 +82,21 @@ public class Server : NetworkController
 
     protected void LateUpdate()
     {
-        _shouldDisconnectClient |= (Time.realtimeSinceStartup - _lastTime) > 30.0f;
-        if (_client != null && _shouldDisconnectClient)
+        if (GameController.Me.CurrentGameState == GameState.Game)
         {
-            _shouldDisconnectClient = false;
-            ForceDisconnection();
-        }
+            _shouldDisconnectClient |= (Time.realtimeSinceStartup - _lastTime) > 30.0f;
+            if (_client != null && _shouldDisconnectClient)
+            {
+                _shouldDisconnectClient = false;
+                ForceDisconnection();
+            }
 
-        byte[] sendData = ServerPacket.ToRawData(GameController.Me.Players, GameController.Me.Ball);
-        if(_client != null)
-        {
-            Debug.Log("Send data!");
-            SendData(sendData, sendData.Length, _client);
+            byte[] sendData = ServerPacket.ToRawData(GameController.Me.Players, GameController.Me.Ball);
+            if (_client != null)
+            {
+                Debug.Log("Send data!");
+                SendData(sendData, sendData.Length, _client);
+            }
         }
     }
 }

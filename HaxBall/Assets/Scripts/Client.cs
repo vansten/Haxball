@@ -12,6 +12,7 @@ public class Client : NetworkController
 
     protected PlayersInfo _clientPlayer;
     protected float _lastTime;
+    protected bool _gameJustBegan;
 
     protected override void OnDataRead(byte[] bytes, int length)
     {
@@ -27,6 +28,7 @@ public class Client : NetworkController
             else if (bytes[0] == STATICS.SYMBOL_ACCEPT_PLAYER)
             {
                 Debug.Log("Client accepted");
+                _gameJustBegan = true;
                 GameController.Me.StartGame();
             }
             else
@@ -124,10 +126,19 @@ public class Client : NetworkController
             }
         }
 
-        if(Time.realtimeSinceStartup - _lastTime > 10.0f)
+        if(_gameJustBegan)
         {
-            Disconnect();
-            GameController.Me.BackToHostJoinMenu();
+            _gameJustBegan = false;
+            _lastTime = Time.realtimeSinceStartup;
+        }
+
+        if (GameController.Me.CurrentGameState == GameState.Game)
+        {
+            if (Time.realtimeSinceStartup - _lastTime > 10.0f)
+            {
+                Disconnect();
+                GameController.Me.BackToHostJoinMenu();
+            }
         }
     }
 }
