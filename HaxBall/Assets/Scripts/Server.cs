@@ -47,7 +47,8 @@ public class Server : NetworkController
                 ClientPacket cp = ClientPacket.FromRawData(bytes);
                 if(cp != null)
                 {
-                    
+                    _lastTime = cp.Timestamp;
+                    GameController.Me.SetFromClientPacket(cp);
                 }
             }
         }

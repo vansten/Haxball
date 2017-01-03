@@ -114,10 +114,9 @@ public class ServerPacket
         }
         checksumCalc &= 0xFF;
 
-        float timeDiff = (Time.realtimeSinceStartup * 1000.0f - timestampRead) / 1000.0f;
-        if(checksumCalc != checksumRead || timeDiff < 0.1f)
+        if(checksumCalc != checksumRead)
         {
-            Debug.Log("Cause checksum or timestamp");
+            Debug.Log("Cause checksum");
             return null;
         }
 
@@ -146,6 +145,7 @@ public class ClientPacket
 
     public Vector2 MovementInput;
     public EPlayer PlayerIndex;
+    public float Timestamp;
     public bool ShootInput;
 
     public static byte[] ToRawData(PlayersInfo playerData)
@@ -191,7 +191,7 @@ public class ClientPacket
         }
 
         int checksumRead = BitConverter.ToInt32(rawData, 1);
-        float timestampRead = BitConverter.ToSingle(rawData, 5);
+        p.Timestamp = BitConverter.ToSingle(rawData, 5);
 
         p.PlayerIndex = (EPlayer)BitConverter.ToInt32(rawData, DATA_OFFSET + 1);
         float horizontal = BitConverter.ToSingle(rawData, DATA_OFFSET + 1 + sizeof(int));
@@ -207,10 +207,9 @@ public class ClientPacket
         }
         checksumCalc &= 0xFF;
 
-        float timeDiff = (Time.realtimeSinceStartup * 1000.0f - timestampRead) / 1000.0f;
-        if (checksumCalc != checksumRead || timeDiff < 0.1f)
+        if (checksumCalc != checksumRead)
         {
-            Debug.Log("Cause checksum or timestamp");
+            Debug.Log("Cause checksum");
             return null;
         }
 
