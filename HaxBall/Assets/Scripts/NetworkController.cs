@@ -34,6 +34,7 @@ public class ServerPacket
     }
     public PlayerPacketData[] PlayersInfo;
     public Vector3 BallPosition;
+    public float Timestamp;
 
     public static byte[] ToRawData(PlayersInfo[] playersData, Transform ball)
     {
@@ -94,7 +95,7 @@ public class ServerPacket
         }
 
         int checksumRead = BitConverter.ToInt32(rawData, 1);
-        float timestampRead = BitConverter.ToSingle(rawData, 5);
+        p.Timestamp = BitConverter.ToSingle(rawData, 5) * 0.001f;
         int playersRead = BitConverter.ToInt32(rawData, 9);
 
         p.PlayersInfo = new PlayerPacketData[playersRead];
@@ -196,7 +197,7 @@ public class ClientPacket
         }
 
         int checksumRead = BitConverter.ToInt32(rawData, 1);
-        p.Timestamp = BitConverter.ToSingle(rawData, 5);
+        p.Timestamp = BitConverter.ToSingle(rawData, 5) * 0.001f;
 
         p.PlayerIndex = (EPlayer)BitConverter.ToInt32(rawData, DATA_OFFSET + 1);
         float horizontal = BitConverter.ToSingle(rawData, DATA_OFFSET + 1 + sizeof(int));
@@ -282,5 +283,11 @@ public abstract class NetworkController : MonoBehaviour
         }
 
         return true;
+    }
+
+    protected virtual void OnApplicationQuit()
+    {
+        _receiveSocket.Close();
+        _sendSocket.Close();
     }
 }

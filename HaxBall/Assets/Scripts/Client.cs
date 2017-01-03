@@ -11,6 +11,7 @@ public class Client : NetworkController
     public IPAddress HostIP;
 
     protected PlayersInfo _clientPlayer;
+    protected float _lastTime;
 
     protected override void OnDataRead(byte[] bytes, int length)
     {
@@ -25,6 +26,7 @@ public class Client : NetworkController
             }
             else if (bytes[0] == STATICS.SYMBOL_ACCEPT_PLAYER)
             {
+                Debug.Log("Client accepted");
                 GameController.Me.StartGame();
             }
             else
@@ -32,6 +34,8 @@ public class Client : NetworkController
                 ServerPacket sp = ServerPacket.FromRawData(bytes);
                 if (sp != null)
                 {
+                    Debug.Log("Server packet");
+                    _lastTime = sp.Timestamp;
                     GameController.Me.SetFromServerPacket(sp);
                 }
                 else
@@ -99,17 +103,31 @@ public class Client : NetworkController
         return null;
     }
 
-    protected void OnApplicationQuit()
+    protected override void OnApplicationQuit()
     {
         Disconnect();
+        base.OnApplicationQuit();
     }
 
     protected void Update()
     {
         if(HostIP != null)
         {
-            byte[] bytes = ClientPacket.ToRawData(_clientPlayer);
-            SendData(bytes, bytes.Length, HostIP);
+            if (GameController.Me.CurrentGameState == GameState.WaitingForServer)
+            {
+                Connect(HostIP, _clientPlayer);
+            }
+            else if (GameController.Me.CurrentGameState == GameState.Game)
+            {
+                byte[] bytes = ClientPacket.ToRawData(_clientPlayer);
+                SendData(bytes, bytes.Length, HostIP);
+            }
+        }
+
+        if(Time.realtimeSinceStartup - _lastTime > 10.0f)
+        {
+            Disconnect();
+            GameController.Me.BackToHostJoinMenu();
         }
     }
 }
