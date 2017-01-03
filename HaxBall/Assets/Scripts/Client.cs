@@ -86,11 +86,7 @@ public class Client : NetworkController
         Debug.Log("Disconnecting");
         Array.Copy(myIP.GetAddressBytes(), 0, ipPacket, 1 + sizeof(float), sizeof(int));
 
-        // Make sure that server will not miss disconnect packet
-        for (int i = 0; i < 10; ++i)
-        {
-            SendData(ipPacket, ipPacket.Length, HostIP);
-        }
+        SendData(ipPacket, ipPacket.Length, HostIP);
     }
 
     protected IPAddress GetClientIP()

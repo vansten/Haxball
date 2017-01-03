@@ -8,6 +8,7 @@ public class Server : NetworkController
 {
     protected IPAddress _client = null;
     protected float _lastTime;
+    protected bool _shouldDisconnectClient = false;
 
     protected override void OnDataRead(byte[] bytes, int length)
     {
@@ -36,10 +37,10 @@ public class Server : NetworkController
                 _lastTime = BitConverter.ToSingle(bytes, 1) * 0.001f;
                 Array.Copy(bytes, 1 + sizeof(float), ip, 0, sizeof(int));
                 IPAddress comp = new IPAddress(ip);
-                if (comp == _client)
+                if (comp.Equals(_client))
                 {
-                    Debug.Log("Player connected " + _client.ToString());
-                    _client = null;
+                    Debug.Log("Player disconnected " + _client.ToString());
+                    _shouldDisconnectClient = true;
                 }
             }
             else
@@ -81,8 +82,10 @@ public class Server : NetworkController
 
     protected void LateUpdate()
     {
-        if(_client != null && Time.realtimeSinceStartup - _lastTime > 30.0f)
+        _shouldDisconnectClient |= (Time.realtimeSinceStartup - _lastTime) > 30.0f;
+        if (_client != null && _shouldDisconnectClient)
         {
+            _shouldDisconnectClient = false;
             ForceDisconnection();
         }
 

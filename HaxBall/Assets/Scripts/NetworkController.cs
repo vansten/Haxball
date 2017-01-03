@@ -285,11 +285,15 @@ public abstract class NetworkController : MonoBehaviour
         return true;
     }
 
+    protected void OnDestroy()
+    {
+        _receiveSocket.Close();
+        _sendSocket.Close();
+    }
+
     protected virtual void OnApplicationQuit()
     {
         _receiveSocket.Close();
-        _receiveSocket.Dispose();
         _sendSocket.Close();
-        _sendSocket.Dispose();
     }
 }
