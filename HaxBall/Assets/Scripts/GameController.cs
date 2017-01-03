@@ -72,7 +72,7 @@ public class GameController : Singleton<GameController>
     protected bool _shouldResetGame;
     protected bool _shouldReturnToMenu;
     protected bool _shouldUpdateClientPlayerFromPacket;
-    protected bool _shouldUpdatePositionsFromServerPacket;
+    protected bool _shouldUpdatePlayersDataFromPacket;
 
     // Initial game state
     protected Vector3 _ballInitPosition;
@@ -204,9 +204,7 @@ public class GameController : Singleton<GameController>
             _playersPositionsFromPacket[(int)ppd.Index] = ppd.Position;
             _playersDictionary[ppd.Index].Score = ppd.Score;
         }
-        _shouldUpdatePositionsFromServerPacket = true;
-
-        Score.text = string.Format("{0} : {1}", _playersDictionary[EPlayer.Player1].Score, _playersDictionary[EPlayer.Player2].Score);
+        _shouldUpdatePlayersDataFromPacket = true;
     }
 
     public void SetFromClientPacket(ClientPacket packet)
@@ -274,12 +272,13 @@ public class GameController : Singleton<GameController>
 
     protected void UpdatePositionsFromServerPacket()
     {
-        _shouldUpdatePositionsFromServerPacket = false;
+        _shouldUpdatePlayersDataFromPacket = false;
         _ball.position = _ballPositionFromPacket;
         foreach(EPlayer player in _playersDictionary.Keys)
         {
             _playersDictionary[player].PlayerTransform.position = _playersPositionsFromPacket[(int)player];
         }
+        Score.text = string.Format("{0} : {1}", _playersDictionary[EPlayer.Player1].Score, _playersDictionary[EPlayer.Player2].Score);
     }
 
     protected void UpdateInputFromClientPacket()
@@ -349,7 +348,7 @@ public class GameController : Singleton<GameController>
             UpdateInputFromClientPacket();
         }
 
-        if(_shouldUpdatePositionsFromServerPacket)
+        if(_shouldUpdatePlayersDataFromPacket)
         {
             UpdatePositionsFromServerPacket();
         }
