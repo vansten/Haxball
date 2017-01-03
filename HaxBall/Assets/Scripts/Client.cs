@@ -134,7 +134,7 @@ public class Client : NetworkController
 
         if (GameController.Me.CurrentGameState == GameState.Game)
         {
-            if (Time.realtimeSinceStartup - _lastTime > 10.0f)
+            if (Time.realtimeSinceStartup - _lastTime > 30.0f)
             {
                 Disconnect();
                 GameController.Me.BackToHostJoinMenu();

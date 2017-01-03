@@ -84,9 +84,15 @@ public class Server : NetworkController
     {
         if (GameController.Me.CurrentGameState == GameState.Game)
         {
-            _shouldDisconnectClient |= (Time.realtimeSinceStartup - _lastTime) > 30.0f;
-            if (_client != null && _shouldDisconnectClient)
+            if (_client != null && (Time.realtimeSinceStartup - _lastTime) > 30.0f)
             {
+                Debug.Log("Timeout");
+                ForceDisconnection();
+            }
+
+            if(_client != null && _shouldDisconnectClient)
+            {
+                Debug.Log("Should disconnect");
                 _shouldDisconnectClient = false;
                 ForceDisconnection();
             }
