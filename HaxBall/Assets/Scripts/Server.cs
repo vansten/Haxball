@@ -18,7 +18,7 @@ public class Server : NetworkController
             if(bytes[0] == STATICS.SYMBOL_PLAYER_CONNECTED && _client == null)
             {
                 byte[] ip = new byte[sizeof(int)];
-                _lastTime = BitConverter.ToSingle(bytes, 1) * 0.001f;
+                _lastTime = BitConverter.ToSingle(bytes, 1);
                 Array.Copy(bytes, 1 + sizeof(float), ip, 0, sizeof(int));
                 _client = new IPAddress(ip);
 
@@ -34,7 +34,7 @@ public class Server : NetworkController
             {
                 Debug.Log("Player trying to disconnect");
                 byte[] ip = new byte[sizeof(int)];
-                _lastTime = BitConverter.ToSingle(bytes, 1) * 0.001f;
+                _lastTime = BitConverter.ToSingle(bytes, 1);
                 Array.Copy(bytes, 1 + sizeof(float), ip, 0, sizeof(int));
                 IPAddress comp = new IPAddress(ip);
                 if (comp.Equals(_client))
@@ -84,7 +84,7 @@ public class Server : NetworkController
     {
         if (GameController.Me.CurrentGameState == GameState.Game)
         {
-            if (_client != null && (Time.realtimeSinceStartup - _lastTime) > 30.0f)
+            if (_client != null && (GameController.Me.Seconds - _lastTime) > 30.0f)
             {
                 Debug.Log("Timeout");
                 ForceDisconnection();

@@ -12,7 +12,6 @@ public class Client : NetworkController
 
     protected PlayersInfo _clientPlayer;
     protected float _lastTime;
-    protected bool _gameJustBegan;
 
     protected override void OnDataRead(byte[] bytes, int length)
     {
@@ -22,13 +21,14 @@ public class Client : NetworkController
             if (bytes[0] == STATICS.SYMBOL_FORCE_DISCONNECT)
             {
                 Debug.Log("Server lost!");
+                _lastTime = GameController.Me.Seconds;
                 GameController.Me.BackToHostJoinMenu();
                 return;
             }
             else if (bytes[0] == STATICS.SYMBOL_ACCEPT_PLAYER)
             {
                 Debug.Log("Client accepted");
-                _gameJustBegan = true;
+                _lastTime = GameController.Me.Seconds;
                 GameController.Me.StartGame();
             }
             else
@@ -60,7 +60,7 @@ public class Client : NetworkController
         {
             return;
         }
-        byte[] timestampBytes = BitConverter.GetBytes(Time.realtimeSinceStartup * 1000.0f);
+        byte[] timestampBytes = BitConverter.GetBytes(GameController.Me.Seconds);
         Array.Copy(timestampBytes, 0, ipPacket, 1, sizeof(float));
         Debug.Log("Connecting");
         Array.Copy(myIP.GetAddressBytes(), 0, ipPacket, 1 + sizeof(float), sizeof(int));
@@ -83,7 +83,7 @@ public class Client : NetworkController
         {
             return;
         }
-        byte[] timestampBytes = BitConverter.GetBytes(Time.realtimeSinceStartup * 1000.0f);
+        byte[] timestampBytes = BitConverter.GetBytes(GameController.Me.Seconds);
         Array.Copy(timestampBytes, 0, ipPacket, 1, sizeof(float));
         Debug.Log("Disconnecting");
         Array.Copy(myIP.GetAddressBytes(), 0, ipPacket, 1 + sizeof(float), sizeof(int));
@@ -126,15 +126,9 @@ public class Client : NetworkController
             }
         }
 
-        if(_gameJustBegan)
-        {
-            _gameJustBegan = false;
-            _lastTime = Time.realtimeSinceStartup;
-        }
-
         if (GameController.Me.CurrentGameState == GameState.Game)
         {
-            if (Time.realtimeSinceStartup - _lastTime > 30.0f)
+            if (GameController.Me.Seconds - _lastTime > 30.0f)
             {
                 Disconnect();
                 GameController.Me.BackToHostJoinMenu();

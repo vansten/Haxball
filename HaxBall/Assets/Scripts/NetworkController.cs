@@ -75,7 +75,7 @@ public class ServerPacket
         toRet[0] = STATICS.SYMBOL_INFO;
         byte[] checksumBytes = BitConverter.GetBytes(checksum);
         Array.Copy(checksumBytes, 0, toRet, 1, sizeof(int));
-        byte[] timestampBytes = BitConverter.GetBytes(BitConverter.ToInt32(BitConverter.GetBytes(Time.realtimeSinceStartup * 1000.0f), 0));
+        byte[] timestampBytes = BitConverter.GetBytes(BitConverter.ToInt32(BitConverter.GetBytes(GameController.Me.Seconds), 0));
         Array.Copy(timestampBytes, 0, toRet, 5, sizeof(int));
         int players = playersData.Length;
         byte[] playersBytes = BitConverter.GetBytes(players);
@@ -95,7 +95,7 @@ public class ServerPacket
         }
 
         int checksumRead = BitConverter.ToInt32(rawData, 1);
-        p.Timestamp = BitConverter.ToSingle(rawData, 5) * 0.001f;
+        p.Timestamp = BitConverter.ToSingle(rawData, 5);
         int playersRead = BitConverter.ToInt32(rawData, 9);
 
         p.PlayersInfo = new PlayerPacketData[playersRead];
@@ -180,7 +180,7 @@ public class ClientPacket
         toRet[0] = STATICS.SYMBOL_INFO;
         byte[] checksumBytes = BitConverter.GetBytes(checksum);
         Array.Copy(checksumBytes, 0, toRet, 1, sizeof(int));
-        byte[] timestampBytes = BitConverter.GetBytes(BitConverter.ToInt32(BitConverter.GetBytes(Time.realtimeSinceStartup * 1000.0f), 0));
+        byte[] timestampBytes = BitConverter.GetBytes(BitConverter.ToInt32(BitConverter.GetBytes(GameController.Me.Seconds), 0));
         Array.Copy(timestampBytes, 0, toRet, 5, sizeof(int));
 
         return toRet;
@@ -197,7 +197,7 @@ public class ClientPacket
         }
 
         int checksumRead = BitConverter.ToInt32(rawData, 1);
-        p.Timestamp = BitConverter.ToSingle(rawData, 5) * 0.001f;
+        p.Timestamp = BitConverter.ToSingle(rawData, 5);
 
         p.PlayerIndex = (EPlayer)BitConverter.ToInt32(rawData, DATA_OFFSET + 1);
         float horizontal = BitConverter.ToSingle(rawData, DATA_OFFSET + 1 + sizeof(int));

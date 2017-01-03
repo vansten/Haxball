@@ -120,6 +120,17 @@ public class GameController : Singleton<GameController>
         get { return _ball; }
     }
 
+    public float Seconds
+    {
+        get
+        {
+            DateTime now = DateTime.UtcNow;
+            float secs = 0.0f;
+            secs = now.Hour * 3600.0f + now.Minute * 60.0f + now.Second + now.Millisecond * 0.001f;
+            return secs;
+        }
+    }
+
     #endregion
 
     #region Public methods
