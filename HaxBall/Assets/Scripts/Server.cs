@@ -23,6 +23,11 @@ public class Server : NetworkController
                 _client = new IPAddress(ip);
 
                 Debug.Log("Player connected " + _client.ToString());
+
+                byte[] ack = new byte[1];
+                ack[0] = STATICS.SYMBOL_ACCEPT_PLAYER;
+                SendData(ack, 1, _client);
+
                 GameController.Me.StartGame();
             }
             else if(bytes[0] == STATICS.SYMBOL_PLAYER_DISCONNECTED && _client != null)
@@ -35,6 +40,14 @@ public class Server : NetworkController
                 {
                     Debug.Log("Player connected " + _client.ToString());
                     _client = null;
+                }
+            }
+            else
+            {
+                ClientPacket cp = ClientPacket.FromRawData(bytes);
+                if(cp != null)
+                {
+                    
                 }
             }
         }
@@ -58,7 +71,7 @@ public class Server : NetworkController
     {
         if(_client != null && Time.realtimeSinceStartup - _lastTime > 30.0f)
         {
-            ForceDisconnection();
+        ForceDisconnection();
         }
 
         byte[] sendData = ServerPacket.ToRawData(GameController.Me.Players, GameController.Me.Ball);

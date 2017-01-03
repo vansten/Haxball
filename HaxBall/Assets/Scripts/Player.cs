@@ -38,40 +38,26 @@ public class Player : MonoBehaviour
     //    }
     //}
 
-    [SerializeField]
-    protected EPlayer _playerIndex;
+    [HideInInspector]
+    public EPlayer PlayerIndex;
 
     protected PlayersInfo _myInfo;
     protected GameObject _ball;
     protected Rigidbody _myRigidBody;
     protected const float _speed = 5.0f;
 
-    void Start()
+    protected void Start()
     {
         _myRigidBody = gameObject.GetComponent<Rigidbody>();
-        _myInfo = GameController.Me.GetInfo(_playerIndex);
+        _myInfo = GameController.Me.GetInfo(PlayerIndex);
     }
 
-    private void Update()
+    protected virtual void Update()
     {
-        bool shoot = Input.GetButtonDown(_myInfo.ShootButtonName);
-        if (shoot && _ball != null)
-        {
-            Vector3 direction = _ball.transform.position - gameObject.transform.position;
-            direction.y = 0.0f;
-            direction.Normalize();
-            _ball.GetComponent<Rigidbody>().AddForce(direction * 2.0f, ForceMode.Impulse);
-        }
-
-        Vector3 input = new Vector3(Input.GetAxis(_myInfo.HorizontalAxisName), 0.0f, Input.GetAxis(_myInfo.VerticalAxisName));
-
-        input.Normalize();
-        input *= Time.deltaTime * _speed;
-        transform.localPosition += input;
         _myRigidBody.velocity = Vector3.zero;
     }
 
-    private void OnTriggerEnter(Collider other)
+    protected void OnTriggerEnter(Collider other)
     {
         string name = other.gameObject.tag;
         if (name == "Ball")
@@ -80,12 +66,30 @@ public class Player : MonoBehaviour
         }
     }
 
-    private void OnTriggerExit(Collider other)
+    protected void OnTriggerExit(Collider other)
     {
         string name = other.gameObject.tag;
         if (name == "Ball")
         {
             _ball = null;
+        }
+    }
+
+    public void AddMovement(Vector2 movement)
+    {
+        movement.Normalize();
+        movement *= Time.deltaTime * _speed;
+        transform.localPosition += new Vector3(movement.x, 0, movement.y);
+    }
+
+    public void TryShoot()
+    {
+        if (_ball != null)
+        {
+            Vector3 direction = _ball.transform.position - gameObject.transform.position;
+            direction.y = 0.0f;
+            direction.Normalize();
+            _ball.GetComponent<Rigidbody>().AddForce(direction * 2.0f, ForceMode.Impulse);
         }
     }
 }

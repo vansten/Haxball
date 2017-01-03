@@ -10,10 +10,7 @@ public class Client : NetworkController
     [HideInInspector]
     public IPAddress HostIP;
 
-    protected void OnApplicationQuit()
-    {
-        Disconnect();
-    }
+    protected PlayersInfo _clientPlayer;
 
     protected override void OnDataRead(byte[] bytes, int length)
     {
@@ -26,16 +23,28 @@ public class Client : NetworkController
                 GameController.Me.BackToHostJoinMenu();
                 return;
             }
-            ServerPacket sp = ServerPacket.FromRawData(bytes);
-            if(sp != null)
+            else if (bytes[0] == STATICS.SYMBOL_ACCEPT_PLAYER)
             {
-                Debug.Log(sp.ToString());
+                GameController.Me.StartGame();
+            }
+            else
+            {
+                ServerPacket sp = ServerPacket.FromRawData(bytes);
+                if (sp != null)
+                {
+                    GameController.Me.SetFromServerPacket(sp);
+                }
+                else
+                {
+                    Debug.Log("Why serverpacket is null");
+                }
             }
         }
     }
     
-    public void Connect(IPAddress hostIP)
+    public void Connect(IPAddress hostIP, PlayersInfo clientPlayer)
     {
+        _clientPlayer = clientPlayer;
         Debug.Log("Trying to connect");
         HostIP = hostIP;
         byte[] ipPacket = new byte[1 + sizeof(float) + sizeof(int)];
@@ -88,5 +97,19 @@ public class Client : NetworkController
         }
 
         return null;
+    }
+
+    protected void OnApplicationQuit()
+    {
+        Disconnect();
+    }
+
+    protected void Update()
+    {
+        if(HostIP != null)
+        {
+            byte[] bytes = ClientPacket.ToRawData(_clientPlayer);
+            SendData(bytes, bytes.Length, HostIP);
+        }
     }
 }

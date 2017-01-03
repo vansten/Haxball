@@ -64,6 +64,7 @@ public class GameController : Singleton<GameController>
     protected NetworkController _networkController;
     protected bool _shouldSetActive;
     protected bool _shouldResetGame;
+    protected bool _shouldReturnToMenu;
 
     // Initial game state
     protected Vector3 _ballInitPosition;
@@ -143,6 +144,10 @@ public class GameController : Singleton<GameController>
 
         _networkController = gameObject.AddComponent<Server>();
         _networkController.Initialize(IPAddress.Any, STATICS.SERVER_PORT_LISTEN, STATICS.SERVER_PORT_SEND);
+        Player hostPlayer = _playersDictionary[EPlayer.Player1].PlayerGO.AddComponent<LocalPlayer>();
+        hostPlayer.PlayerIndex = EPlayer.Player1;
+        Player clientPlayer = _playersDictionary[EPlayer.Player2].PlayerGO.AddComponent<Player>();
+        clientPlayer.PlayerIndex = EPlayer.Player2;
     }
 
     public void StartGameAsClient(IPAddress hostIP)
@@ -152,7 +157,7 @@ public class GameController : Singleton<GameController>
         _networkController = gameObject.AddComponent<Client>();
         _networkController.Initialize(hostIP, STATICS.SERVER_PORT_SEND, STATICS.SERVER_PORT_LISTEN);
         Client c = (Client)_networkController;
-        c.Connect(hostIP);
+        c.Connect(hostIP, _playersDictionary[EPlayer.Player2]);
     }
 
     public void StartGame()
@@ -162,9 +167,38 @@ public class GameController : Singleton<GameController>
 
     public void BackToHostJoinMenu()
     {
-        CurrentGameState = GameState.HostJoinMenu;
-        Destroy(_networkController);
-        _networkController = null;
+        _shouldReturnToMenu = true;
+    }
+
+    public void SetFromServerPacket(ServerPacket packet)
+    {
+        if(Role == NetworkRole.Host)
+        {
+            // Do not set this on server
+            return;
+        }
+
+        _ball.position = packet.BallPosition;
+        foreach(ServerPacket.PlayerPacketData ppd in packet.PlayersInfo)
+        {
+            _playersDictionary[ppd.Index].PlayerTransform.position = ppd.Position;
+        }
+    }
+
+    public void SetFromClientPacket(ClientPacket packet)
+    {
+        Player clientPlayer = _playersDictionary[packet.PlayerIndex].PlayerGO.GetComponent<Player>();
+        if(clientPlayer == null)
+        {
+            Debug.Log("Cannot get player component");
+            return;
+        }
+
+        if(packet.ShootInput)
+        {
+            clientPlayer.TryShoot();
+        }
+        clientPlayer.AddMovement(packet.MovementInput);
     }
 
     #endregion
@@ -208,6 +242,14 @@ public class GameController : Singleton<GameController>
         }
     }
 
+    protected void ReturnToHostJoinMenu()
+    {
+        _shouldReturnToMenu = false;
+        CurrentGameState = GameState.HostJoinMenu;
+        Destroy(_networkController);
+        _networkController = null;
+    }
+
     #endregion
 
     #region Unity methods
@@ -247,6 +289,11 @@ public class GameController : Singleton<GameController>
         if(_shouldResetGame)
         {
             ResetGameState();
+        }
+
+        if(_shouldReturnToMenu)
+        {
+            ReturnToHostJoinMenu();
         }
     }
 

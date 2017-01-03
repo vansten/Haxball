@@ -16,6 +16,7 @@ public struct STATICS
     public const int SYMBOL_INFO = 0x09;
     public const int SYMBOL_DATA = 0x10;
     public const int SYMBOL_FORCE_DISCONNECT = 0x11;
+    public const int SYMBOL_ACCEPT_PLAYER = 0x12;
 }
 
 //Packet from server to clients
@@ -80,10 +81,11 @@ public class ServerPacket
 
     public static ServerPacket FromRawData(byte[] rawData)
     {
-        ServerPacket p = null;
+        ServerPacket p = new ServerPacket();
         
         if(rawData.Length < DATA_OFFSET + 1 || rawData[0] != STATICS.SYMBOL_INFO || rawData[DATA_OFFSET] != STATICS.SYMBOL_DATA)
         {
+            Debug.Log("Cause length and symbols");
             return null;
         }
 
@@ -115,6 +117,7 @@ public class ServerPacket
         float timeDiff = (Time.realtimeSinceStartup * 1000.0f - timestampRead) / 1000.0f;
         if(checksumCalc != checksumRead || timeDiff < 0.1f)
         {
+            Debug.Log("Cause checksum or timestamp");
             return null;
         }
 
@@ -138,19 +141,78 @@ public class ServerPacket
 //Packet from clients to server
 public class ClientPacket
 {
-    public int Checksum;
-    public float Timestamp;
-    public Vector2 MovementInput;
-    public byte ShootInput;
+    public const int DATA_OFFSET = 1 + 2 * sizeof(int);
+    public const int ONE_PLAYER_OFFSET = sizeof(int) + 3 * sizeof(float);
 
-    public static byte[] ToRawData(PlayersInfo playersData)
+    public Vector2 MovementInput;
+    public EPlayer PlayerIndex;
+    public bool ShootInput;
+
+    public static byte[] ToRawData(PlayersInfo playerData)
     {
-        return new byte[STATICS.MAX_MESSAGE_LENGTH];
+        byte[] toRet = new byte[STATICS.MAX_MESSAGE_LENGTH];
+
+        toRet[DATA_OFFSET] = STATICS.SYMBOL_DATA;
+        byte[] playerIndexBytes = BitConverter.GetBytes((int)playerData.PlayerIndex);
+        byte[] horizontalBytes = BitConverter.GetBytes(Input.GetAxis(playerData.HorizontalAxisName));
+        byte[] verticalBytes = BitConverter.GetBytes(Input.GetAxis(playerData.VerticalAxisName));
+        byte[] shootBytes = BitConverter.GetBytes(Input.GetButtonDown(playerData.ShootButtonName));
+
+        Array.Copy(playerIndexBytes, 0, toRet, DATA_OFFSET + 1, sizeof(int));
+        Array.Copy(horizontalBytes, 0, toRet, DATA_OFFSET + 1 + sizeof(int), sizeof(float));
+        Array.Copy(verticalBytes, 0, toRet, DATA_OFFSET + 1 + sizeof(int) + sizeof(float), sizeof(float));
+        Array.Copy(shootBytes, 0, toRet, DATA_OFFSET + 1 + sizeof(int) + 2 * sizeof(float), sizeof(bool));
+
+        int checksum = 0;
+        int dataSize = ONE_PLAYER_OFFSET;
+        for (int i = 0; i < dataSize; ++i)
+        {
+            checksum += toRet[DATA_OFFSET + i];
+        }
+        checksum &= 0xFF;
+
+        toRet[0] = STATICS.SYMBOL_INFO;
+        byte[] checksumBytes = BitConverter.GetBytes(checksum);
+        Array.Copy(checksumBytes, 0, toRet, 1, sizeof(int));
+        byte[] timestampBytes = BitConverter.GetBytes(BitConverter.ToInt32(BitConverter.GetBytes(Time.realtimeSinceStartup * 1000.0f), 0));
+        Array.Copy(timestampBytes, 0, toRet, 5, sizeof(int));
+
+        return toRet;
     }
 
     public static ClientPacket FromRawData(byte[] rawData)
     {
-        ClientPacket p = null;
+        ClientPacket p = new ClientPacket();
+
+        if (rawData.Length < DATA_OFFSET + 1 || rawData[0] != STATICS.SYMBOL_INFO || rawData[DATA_OFFSET] != STATICS.SYMBOL_DATA)
+        {
+            Debug.Log("Cause length and symbols");
+            return null;
+        }
+
+        int checksumRead = BitConverter.ToInt32(rawData, 1);
+        float timestampRead = BitConverter.ToSingle(rawData, 5);
+
+        p.PlayerIndex = (EPlayer)BitConverter.ToInt32(rawData, DATA_OFFSET + 1);
+        float horizontal = BitConverter.ToSingle(rawData, DATA_OFFSET + 1 + sizeof(int));
+        float vertical = BitConverter.ToSingle(rawData, DATA_OFFSET + 1 + sizeof(int) + sizeof(float));
+        p.MovementInput = new Vector2(horizontal, vertical);
+        p.ShootInput = BitConverter.ToBoolean(rawData, DATA_OFFSET + 1 + sizeof(int) + 2 * sizeof(float));
+
+        int checksumCalc = 0;
+        int dataSize = ONE_PLAYER_OFFSET;
+        for (int i = 0; i < dataSize; ++i)
+        {
+            checksumCalc += rawData[DATA_OFFSET + i];
+        }
+        checksumCalc &= 0xFF;
+
+        float timeDiff = (Time.realtimeSinceStartup * 1000.0f - timestampRead) / 1000.0f;
+        if (checksumCalc != checksumRead || timeDiff < 0.1f)
+        {
+            Debug.Log("Cause checksum or timestamp");
+            return null;
+        }
 
         return p;
     }
