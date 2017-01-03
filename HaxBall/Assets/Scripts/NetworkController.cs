@@ -288,6 +288,8 @@ public abstract class NetworkController : MonoBehaviour
     protected virtual void OnApplicationQuit()
     {
         _receiveSocket.Close();
+        _receiveSocket.Dispose();
         _sendSocket.Close();
+        _sendSocket.Dispose();
     }
 }
