@@ -38,15 +38,17 @@ public class Client : NetworkController
     {
         Debug.Log("Trying to connect");
         HostIP = hostIP;
-        byte[] ipPacket = new byte[1 + sizeof(int)];
+        byte[] ipPacket = new byte[1 + sizeof(float) + sizeof(int)];
         ipPacket[0] = STATICS.SYMBOL_PLAYER_CONNECTED;
         IPAddress myIP = GetClientIP();
         if(myIP == null)
         {
             return;
         }
+        byte[] timestampBytes = BitConverter.GetBytes(Time.realtimeSinceStartup * 1000.0f);
+        Array.Copy(timestampBytes, 0, ipPacket, 1, sizeof(float));
         Debug.Log("Connecting");
-        Array.Copy(myIP.GetAddressBytes(), 0, ipPacket, 1, sizeof(int));
+        Array.Copy(myIP.GetAddressBytes(), 0, ipPacket, 1 + sizeof(float), sizeof(int));
 
         SendData(ipPacket, ipPacket.Length, HostIP);
     }
@@ -59,15 +61,17 @@ public class Client : NetworkController
             return;
         }
         Debug.Log("Trying to disconnect 2");
-        byte[] ipPacket = new byte[1 + sizeof(int)];
+        byte[] ipPacket = new byte[1 + sizeof(float) + sizeof(int)];
         ipPacket[0] = STATICS.SYMBOL_PLAYER_DISCONNECTED;
         IPAddress myIP = GetClientIP();
         if (myIP == null)
         {
             return;
         }
+        byte[] timestampBytes = BitConverter.GetBytes(Time.realtimeSinceStartup * 1000.0f);
+        Array.Copy(timestampBytes, 0, ipPacket, 1, sizeof(float));
         Debug.Log("Disconnecting");
-        Array.Copy(myIP.GetAddressBytes(), 0, ipPacket, 1, sizeof(int));
+        Array.Copy(myIP.GetAddressBytes(), 0, ipPacket, 1 + sizeof(float), sizeof(int));
 
         SendData(ipPacket, ipPacket.Length, HostIP);
     }

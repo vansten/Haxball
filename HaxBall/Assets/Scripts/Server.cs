@@ -14,11 +14,11 @@ public class Server : NetworkController
         if(length > 0)
         {
             Debug.Log("Server received data!");
-            _lastTime = Time.time;
             if(bytes[0] == STATICS.SYMBOL_PLAYER_CONNECTED && _client == null)
             {
                 byte[] ip = new byte[sizeof(int)];
-                Array.Copy(bytes, 1, ip, 0, sizeof(int));
+                _lastTime = BitConverter.ToSingle(bytes, 1) * 0.001f;
+                Array.Copy(bytes, 1 + sizeof(float), ip, 0, sizeof(int));
                 _client = new IPAddress(ip);
 
                 Debug.Log("Player connected " + _client.ToString());
@@ -27,7 +27,8 @@ public class Server : NetworkController
             else if(bytes[0] == STATICS.SYMBOL_PLAYER_DISCONNECTED && _client != null)
             {
                 byte[] ip = new byte[sizeof(int)];
-                Array.Copy(bytes, 1, ip, 0, sizeof(int));
+                _lastTime = BitConverter.ToSingle(bytes, 1) * 0.001f;
+                Array.Copy(bytes, 1 + sizeof(float), ip, 0, sizeof(int));
                 IPAddress comp = new IPAddress(ip);
                 if (comp == _client)
                 {
@@ -40,7 +41,7 @@ public class Server : NetworkController
 
     protected void LateUpdate()
     {
-        if(_client != null && Time.realtimeSinceStartup - _lastTime > 10.0f)
+        if(_client != null && Time.realtimeSinceStartup - _lastTime > 30.0f)
         {
             Debug.Log("Client lost!");
             byte[] forceDisconnectData = new byte[1];
