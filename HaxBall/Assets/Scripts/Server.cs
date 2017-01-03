@@ -8,6 +8,7 @@ public class Server : NetworkController
 {
     protected IPAddress _client = null;
     protected float _lastTime;
+    protected float _lastSendTime;
 
     protected override void OnDataRead(byte[] bytes, int length)
     {
@@ -39,20 +40,31 @@ public class Server : NetworkController
         }
     }
 
+    protected void ForceDisconnection()
+    {
+        Debug.Log("Client lost!");
+        byte[] forceDisconnectData = new byte[1];
+        forceDisconnectData[0] = STATICS.SYMBOL_FORCE_DISCONNECT;
+        SendData(forceDisconnectData, 1, _client);
+        _client = null;
+    }
+
+    protected void OnApplicationQuit()
+    {
+        ForceDisconnection();
+    }
+
     protected void LateUpdate()
     {
         if(_client != null && Time.realtimeSinceStartup - _lastTime > 30.0f)
         {
-            Debug.Log("Client lost!");
-            byte[] forceDisconnectData = new byte[1];
-            forceDisconnectData[0] = STATICS.SYMBOL_FORCE_DISCONNECT;
-            SendData(forceDisconnectData, 1, _client);
-            _client = null;
+            ForceDisconnection();
         }
 
         byte[] sendData = ServerPacket.ToRawData(GameController.Me.Players, GameController.Me.Ball);
-        if(_client != null)
+        if(_client != null && Time.realtimeSinceStartup - _lastSendTime > 0.05f)
         {
+            _lastSendTime = Time.realtimeSinceStartup;
             Debug.Log("Send data!");
             SendData(sendData, sendData.Length, _client);
         }

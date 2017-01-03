@@ -186,6 +186,8 @@ public abstract class NetworkController : MonoBehaviour
         try
         {
             int bytesRead = _receiveSocket.EndReceiveFrom(result, ref _receiveEndPoint);
+            _receiveSocket.BeginReceiveFrom(_receivedBytes, 0, STATICS.MAX_MESSAGE_LENGTH, SocketFlags.None, ref _receiveEndPoint, MessageReceivedCallback, this);
+
             if (CheckData(_receivedBytes, bytesRead))
             {
                 OnDataRead(_receivedBytes, bytesRead);
@@ -195,8 +197,6 @@ public abstract class NetworkController : MonoBehaviour
         {
             Debug.LogError(e.Message);
         }
-        
-        _receiveSocket.BeginReceiveFrom(_receivedBytes, 0, STATICS.MAX_MESSAGE_LENGTH, SocketFlags.None, ref _receiveEndPoint, MessageReceivedCallback, this);
     }
 
     protected virtual void OnDataRead(byte[] bytes, int length)
