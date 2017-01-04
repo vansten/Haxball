@@ -87,7 +87,7 @@ public class Server : NetworkController
     {
         if (GameController.Me.CurrentGameState == GameState.Game)
         {
-            if (_client != null && (GameController.Me.Seconds - _lastTime) > 30.0f)
+            if (_client != null && (GameController.Me.Seconds - _lastTime) > _timeout)
             {
                 Debug.Log("Server side timeout: " + GameController.Me.Seconds.ToString() + " vs. " + _lastTime.ToString());
                 ForceDisconnection(true);

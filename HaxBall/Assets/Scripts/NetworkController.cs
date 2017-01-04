@@ -225,7 +225,8 @@ public class ClientPacket
 
 public abstract class NetworkController : MonoBehaviour
 {
-    protected const float _minTimeBetweenPackets = 1.0f / 60.0f;
+    protected const float _minTimeBetweenPackets = 1.0f / 120.0f;
+    protected const float _timeout = 3.0f;
 
     protected Socket _sendSocket;
     protected Socket _receiveSocket;
