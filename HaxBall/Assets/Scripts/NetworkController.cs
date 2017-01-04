@@ -225,12 +225,16 @@ public class ClientPacket
 
 public abstract class NetworkController : MonoBehaviour
 {
+    protected const float _minTimeBetweenPackets = 1.0f / 60.0f;
+
     protected Socket _sendSocket;
     protected Socket _receiveSocket;
     protected EndPoint _sendEndPoint;
     protected EndPoint _receiveEndPoint;
 
     protected byte[] _receivedBytes = new byte[STATICS.MAX_MESSAGE_LENGTH];
+    protected float _lastDataSendTime;
+    protected bool _wasDataSent;
 
     public void Initialize(IPAddress targetIP, int receivePort, int sendPort)
     {
@@ -244,6 +248,15 @@ public abstract class NetworkController : MonoBehaviour
 
     public void SendData(byte[] bytes, int length, IPAddress ip)
     {
+        if(_wasDataSent)
+        {
+            if(GameController.Me.Seconds - _lastDataSendTime < _minTimeBetweenPackets)
+            {
+                return;
+            }
+        }
+        _lastDataSendTime = GameController.Me.Seconds;
+        _wasDataSent = true;
         ((IPEndPoint)_sendEndPoint).Address = ip;
         _sendSocket.SendTo(bytes, length, SocketFlags.None, _sendEndPoint);
     }
