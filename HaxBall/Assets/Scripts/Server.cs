@@ -14,15 +14,15 @@ public class Server : NetworkController
     {
         if(length > 0)
         {
-            Debug.Log("Server received data!");
-            if(bytes[0] == STATICS.SYMBOL_PLAYER_CONNECTED && _client == null)
+            Debug.Log(GameController.Me.Seconds.ToString() + " Server::OnDataRead");
+            if (bytes[0] == STATICS.SYMBOL_PLAYER_CONNECTED && _client == null)
             {
                 byte[] ip = new byte[sizeof(int)];
                 _lastTime = BitConverter.ToSingle(bytes, 1);
                 Array.Copy(bytes, 1 + sizeof(float), ip, 0, sizeof(int));
                 _client = new IPAddress(ip);
 
-                Debug.Log("Player connected " + _client.ToString());
+                Debug.Log(GameController.Me.Seconds.ToString() + " Server::ClientConnected");
 
                 byte[] ack = new byte[1];
                 ack[0] = STATICS.SYMBOL_ACCEPT_PLAYER;
@@ -32,24 +32,22 @@ public class Server : NetworkController
             }
             else if(bytes[0] == STATICS.SYMBOL_PLAYER_DISCONNECTED && _client != null)
             {
-                Debug.Log("Player trying to disconnect");
                 byte[] ip = new byte[sizeof(int)];
                 _lastTime = BitConverter.ToSingle(bytes, 1);
                 Array.Copy(bytes, 1 + sizeof(float), ip, 0, sizeof(int));
                 IPAddress comp = new IPAddress(ip);
                 if (comp.Equals(_client))
                 {
-                    Debug.Log("Player disconnected " + _client.ToString());
+                    Debug.Log(GameController.Me.Seconds.ToString() + " Server::ClientDisconnected");
                     _shouldDisconnectClient = true;
                 }
             }
             else
             {
-                Debug.Log("Client packet?");
                 ClientPacket cp = ClientPacket.FromRawData(bytes);
                 if(cp != null)
                 {
-                    Debug.Log("Client packet!");
+                    Debug.Log(GameController.Me.Seconds.ToString() + " Server::ClientPacketReceived");
                     _lastTime = cp.Timestamp;
                     GameController.Me.SetFromClientPacket(cp);
                 }
@@ -65,8 +63,8 @@ public class Server : NetworkController
             return;
         }
 
-        Debug.Log("Client lost!");
-        if(sendForceDisconnectPacket)
+        Debug.Log(GameController.Me.Seconds.ToString() + " Server::ForceDisconnection");
+        if (sendForceDisconnectPacket)
         {
             byte[] forceDisconnectData = new byte[1];
             forceDisconnectData[0] = STATICS.SYMBOL_FORCE_DISCONNECT;
@@ -89,13 +87,12 @@ public class Server : NetworkController
         {
             if (_client != null && (GameController.Me.Seconds - _lastTime) > _timeout)
             {
-                Debug.Log("Server side timeout: " + GameController.Me.Seconds.ToString() + " vs. " + _lastTime.ToString());
+                Debug.Log(GameController.Me.Seconds.ToString() + " Server::Timeout");
                 ForceDisconnection(true);
             }
 
             if(_client != null && _shouldDisconnectClient)
             {
-                Debug.Log("Should disconnect");
                 _shouldDisconnectClient = false;
                 ForceDisconnection(false);
             }
@@ -103,7 +100,7 @@ public class Server : NetworkController
             byte[] sendData = ServerPacket.ToRawData(GameController.Me.Players, GameController.Me.Ball);
             if (_client != null)
             {
-                Debug.Log("Send data!");
+                Debug.Log(GameController.Me.Seconds.ToString() + " Server::SendData");
                 SendData(sendData, sendData.Length, _client);
             }
         }

@@ -209,6 +209,8 @@ public class GameController : Singleton<GameController>
             return;
         }
 
+        Debug.Log(Seconds.ToString() + " GameController::SetFromServerPacket");
+
         _ballPositionFromPacket = packet.BallPosition;
         foreach(ServerPacket.PlayerPacketData ppd in packet.PlayersInfo)
         {
@@ -222,10 +224,11 @@ public class GameController : Singleton<GameController>
     {
         if(_clientPlayer == null)
         {
-            Debug.Log("Cannot get player component");
+            //Debug.Log("Cannot get player component");
             return;
         }
 
+        Debug.Log(Seconds.ToString() + " GameController::SetFromClientPacket");
 
         _shootFromPacket = packet.ShootInput;
         _movementFromPacket = packet.MovementInput;
@@ -283,6 +286,7 @@ public class GameController : Singleton<GameController>
 
     protected void UpdatePositionsFromServerPacket()
     {
+        Debug.Log(Seconds.ToString() + " GameController::UpdatePositionsFromServerPacket");
         _shouldUpdatePlayersDataFromPacket = false;
         _ball.position = _ballPositionFromPacket;
         foreach(EPlayer player in _playersDictionary.Keys)
@@ -294,6 +298,7 @@ public class GameController : Singleton<GameController>
 
     protected void UpdateInputFromClientPacket()
     {
+        Debug.Log(Seconds.ToString() + " GameController::UpdateInputFromClientPacket");
         _shouldUpdateClientPlayerFromPacket = false;
         if(_clientPlayer != null)
         {

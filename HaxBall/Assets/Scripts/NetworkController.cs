@@ -90,7 +90,6 @@ public class ServerPacket
         
         if(rawData.Length < DATA_OFFSET + 1 || rawData[0] != STATICS.SYMBOL_INFO || rawData[DATA_OFFSET] != STATICS.SYMBOL_DATA)
         {
-            Debug.Log("Cause length and symbols");
             return null;
         }
 
@@ -122,7 +121,7 @@ public class ServerPacket
 
         if(checksumCalc != checksumRead)
         {
-            Debug.Log("Cause checksum");
+            Debug.Log(GameController.Me.Seconds.ToString() + " NetworkController::ServerPacket::ChecksumWrong");
             return null;
         }
 
@@ -192,7 +191,6 @@ public class ClientPacket
 
         if (rawData.Length < DATA_OFFSET + 1 || rawData[0] != STATICS.SYMBOL_INFO || rawData[DATA_OFFSET] != STATICS.SYMBOL_DATA)
         {
-            Debug.Log("Cause length and symbols");
             return null;
         }
 
@@ -215,7 +213,7 @@ public class ClientPacket
 
         if (checksumCalc != checksumRead)
         {
-            Debug.Log("Cause checksum");
+            Debug.Log(GameController.Me.Seconds.ToString() + " NetworkController::ClientPacket::ChecksumWrong");
             return null;
         }
 
@@ -239,6 +237,7 @@ public abstract class NetworkController : MonoBehaviour
 
     public void Initialize(IPAddress targetIP, int receivePort, int sendPort)
     {
+        Debug.Log(GameController.Me.Seconds.ToString() + " NetworkController::Initialize");
         _sendEndPoint = new IPEndPoint(targetIP, sendPort);
         _sendSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         _receiveEndPoint = new IPEndPoint(IPAddress.Any, receivePort);
@@ -253,6 +252,7 @@ public abstract class NetworkController : MonoBehaviour
         {
             if(GameController.Me.Seconds - _lastDataSendTime < _minTimeBetweenPackets)
             {
+                Debug.Log(GameController.Me.Seconds.ToString() + " NetworkController::AbortSendingData");
                 return;
             }
         }
@@ -266,6 +266,7 @@ public abstract class NetworkController : MonoBehaviour
     {
         try
         {
+            Debug.Log(GameController.Me.Seconds.ToString() + " NetworkController::MessageReceived");
             int bytesRead = _receiveSocket.EndReceiveFrom(result, ref _receiveEndPoint);
             _receiveSocket.BeginReceiveFrom(_receivedBytes, 0, STATICS.MAX_MESSAGE_LENGTH, SocketFlags.None, ref _receiveEndPoint, MessageReceivedCallback, this);
 
@@ -282,7 +283,6 @@ public abstract class NetworkController : MonoBehaviour
 
     protected virtual void OnDataRead(byte[] bytes, int length)
     {
-        Debug.Log("Data read");
         for(int i = 0; i < length; ++i)
         {
             Debug.Log(bytes[i]);
@@ -293,6 +293,7 @@ public abstract class NetworkController : MonoBehaviour
     {
         if (!(length > 0 && length <= STATICS.MAX_MESSAGE_LENGTH))
         {
+            Debug.Log(GameController.Me.Seconds.ToString() + " NetworkController::InvalidData");
             return false;
         }
 
@@ -301,12 +302,14 @@ public abstract class NetworkController : MonoBehaviour
 
     protected void OnDestroy()
     {
+        Debug.Log(GameController.Me.Seconds.ToString() + " NetworkController::OnDestroy");
         _receiveSocket.Close();
         _sendSocket.Close();
     }
 
     protected virtual void OnApplicationQuit()
     {
+        Debug.Log(GameController.Me.Seconds.ToString() + " NetworkController::OnApplicationQuit");
         _receiveSocket.Close();
         _sendSocket.Close();
     }

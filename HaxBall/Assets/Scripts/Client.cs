@@ -15,19 +15,19 @@ public class Client : NetworkController
 
     protected override void OnDataRead(byte[] bytes, int length)
     {
-        if(length > 0)
+        if (length > 0)
         {
-            Debug.Log("Client received data!");
+            Debug.Log(GameController.Me.Seconds.ToString() + " Cleint::OnDataRead");
             if (bytes[0] == STATICS.SYMBOL_FORCE_DISCONNECT)
             {
-                Debug.Log("Server lost!");
+                Debug.Log(GameController.Me.Seconds.ToString() + " Client::ForceDisconnect");
                 _lastTime = GameController.Me.Seconds;
                 GameController.Me.BackToHostJoinMenu();
                 return;
             }
             else if (bytes[0] == STATICS.SYMBOL_ACCEPT_PLAYER)
             {
-                Debug.Log("Client accepted");
+                Debug.Log(GameController.Me.Seconds.ToString() + " Client::ClientAccepted");
                 _lastTime = GameController.Me.Seconds;
                 GameController.Me.StartGame();
             }
@@ -36,13 +36,9 @@ public class Client : NetworkController
                 ServerPacket sp = ServerPacket.FromRawData(bytes);
                 if (sp != null)
                 {
-                    Debug.Log("Server packet");
+                    Debug.Log(GameController.Me.Seconds.ToString() + " Client::ServerPacketReceived");
                     _lastTime = sp.Timestamp;
                     GameController.Me.SetFromServerPacket(sp);
-                }
-                else
-                {
-                    Debug.Log("Why serverpacket is null");
                 }
             }
         }
@@ -51,7 +47,6 @@ public class Client : NetworkController
     public void Connect(IPAddress hostIP, PlayersInfo clientPlayer)
     {
         _clientPlayer = clientPlayer;
-        Debug.Log("Trying to connect");
         HostIP = hostIP;
         byte[] ipPacket = new byte[1 + sizeof(float) + sizeof(int)];
         ipPacket[0] = STATICS.SYMBOL_PLAYER_CONNECTED;
@@ -60,9 +55,9 @@ public class Client : NetworkController
         {
             return;
         }
+        Debug.Log(GameController.Me.Seconds.ToString() + " Client::Connect");
         byte[] timestampBytes = BitConverter.GetBytes(GameController.Me.Seconds);
         Array.Copy(timestampBytes, 0, ipPacket, 1, sizeof(float));
-        Debug.Log("Connecting");
         Array.Copy(myIP.GetAddressBytes(), 0, ipPacket, 1 + sizeof(float), sizeof(int));
 
         SendData(ipPacket, ipPacket.Length, HostIP);
@@ -70,12 +65,10 @@ public class Client : NetworkController
 
     public void Disconnect()
     {
-        Debug.Log("Trying to disconnect");
         if(HostIP == null)
         {
             return;
         }
-        Debug.Log("Trying to disconnect 2");
         byte[] ipPacket = new byte[1 + sizeof(float) + sizeof(int)];
         ipPacket[0] = STATICS.SYMBOL_PLAYER_DISCONNECTED;
         IPAddress myIP = GetClientIP();
@@ -85,7 +78,7 @@ public class Client : NetworkController
         }
         byte[] timestampBytes = BitConverter.GetBytes(GameController.Me.Seconds);
         Array.Copy(timestampBytes, 0, ipPacket, 1, sizeof(float));
-        Debug.Log("Disconnecting");
+        Debug.Log(GameController.Me.Seconds.ToString() + " Client::Disconnect");
         Array.Copy(myIP.GetAddressBytes(), 0, ipPacket, 1 + sizeof(float), sizeof(int));
 
         SendData(ipPacket, ipPacket.Length, HostIP);
@@ -121,6 +114,7 @@ public class Client : NetworkController
             }
             else if (GameController.Me.CurrentGameState == GameState.Game)
             {
+                Debug.Log(GameController.Me.Seconds.ToString() + " Client::SendData");
                 byte[] bytes = ClientPacket.ToRawData(_clientPlayer);
                 SendData(bytes, bytes.Length, HostIP);
             }
@@ -130,7 +124,7 @@ public class Client : NetworkController
         {
             if (GameController.Me.Seconds - _lastTime > _timeout)
             {
-                Debug.Log("Client side timeout: " + GameController.Me.Seconds.ToString() + " vs. " + _lastTime.ToString());
+                Debug.Log(GameController.Me.Seconds.ToString() + " Client::Timeout");
                 Disconnect();
                 GameController.Me.BackToHostJoinMenu();
             }
